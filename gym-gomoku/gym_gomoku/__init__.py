@@ -5,7 +5,7 @@ register(
     entry_point='gym_gomoku.envs:GomokuEnv',
     kwargs={
         'player_color': 'black',
-        'opponent': 'beginner', # beginner opponent policy has defend and strike rules
+        'opponent': 'beginner',  # beginner opponent policy has defend and strike rules
         'board_size': 19,
     },
     nondeterministic=True,
@@ -16,9 +16,30 @@ register(
     entry_point='gym_gomoku.envs:GomokuEnv',
     kwargs={
         'player_color': 'black',
-        'opponent': 'beginner', # random policy is the simplest
+        'opponent': 'beginner',  # random policy is the simplest
         'board_size': 9,
     },
     nondeterministic=True,
 )
 
+register(
+    id='Gomoku7x7Random-v0',
+    entry_point='gym_gomoku.envs:GomokuEnv',
+    kwargs={
+        'player_color': 'black',
+        'opponent': 'random',  # random policy is the simplest
+        'board_size': 7,
+    },
+    nondeterministic=True,
+)
+
+register(
+    id='Gomoku7x7-v0',
+    entry_point='gym_gomoku.envs:GomokuEnv',
+    kwargs={
+        'player_color': 'black',
+        'opponent': 'beginner',  # random policy is the simplest
+        'board_size': 7,
+    },
+    nondeterministic=True,
+)

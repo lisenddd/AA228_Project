@@ -136,7 +136,7 @@ class GomokuEnv(gym.Env):
         self.action_space = DiscreteWrapper(self.board_size**2)
         
         self.done = self.state.board.is_terminal()
-        return self.state.board.encode()
+        return self.state.board.encode(), self.state
     
     def _close(self):
         self.opponent_policy = None
@@ -165,7 +165,7 @@ class GomokuEnv(gym.Env):
         
         # If already terminal, then don't do anything
         if self.done:
-            return self.state.board.encode(), 0., True, {'state': self.state}
+            return self.state.board.encode(), 0., True, self.state
         
         # Player play
         prev_state = self.state
@@ -184,7 +184,7 @@ class GomokuEnv(gym.Env):
         # Reward: if nonterminal, there is no 5 in a row, then the reward is 0
         if not self.state.board.is_terminal():
             self.done = False
-            return self.state.board.encode(), 0., False, {'state': self.state}
+            return self.state.board.encode(), 0., False, self.state
         
         # We're in a terminal state. Reward is 1 if won, -1 if lost
         assert self.state.board.is_terminal(), 'The game is terminal'
@@ -198,7 +198,7 @@ class GomokuEnv(gym.Env):
         else:
             player_wins = (self.player_color == win_color) # check if player_color is the win_color
             reward = 1. if player_wins else -1.
-        return self.state.board.encode(), reward, True, {'state': self.state}
+        return self.state.board.encode(), reward, True, self.state
     
     def _exec_opponent_play(self, curr_state, prev_state, prev_action):
         '''There is no resign in gomoku'''
