@@ -147,8 +147,7 @@ class AlphaZeroTrainer:
             while not done:
                 action = zero_player.get_action(state)
                 observation, reward, done, state = self.env.step(action)
-                if i == 9:
-                    self.env.render("human")
+                self.env.render("human")
             zero_player.reset_player()
             rewards += reward if reward > 0 else 0
             _, state = self.env.reset()
