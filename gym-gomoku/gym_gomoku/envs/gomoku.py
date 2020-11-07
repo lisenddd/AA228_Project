@@ -149,7 +149,7 @@ class GomokuEnv(gym.Env):
         outfile.write(repr(self.state) + '\n')
         return outfile
     
-    def _step(self, action):
+    def _step(self, action, opponent_action=None):
         '''
         Args: 
             action: int
@@ -174,10 +174,17 @@ class GomokuEnv(gym.Env):
         self.action_space.remove(action) # remove current action from action_space
         
         # Opponent play
-        if not self.state.board.is_terminal():
+        if not self.state.board.is_terminal() and opponent_action is None:
             self.state, opponent_action = self._exec_opponent_play(self.state, prev_state, action)
             self.moves.append(self.state.board.last_coord)
             self.action_space.remove(opponent_action)   # remove opponent action from action_space
+            # After opponent play, we should be back to the original color
+            assert self.state.color == self.player_color
+
+        elif not self.state.board.is_terminal() and opponent_action is not None:
+            self.state = self.state.act(opponent_action)
+            self.moves.append(self.state.board.last_coord)
+            self.action_space.remove(opponent_action)  # remove opponent action from action_space
             # After opponent play, we should be back to the original color
             assert self.state.color == self.player_color
         
