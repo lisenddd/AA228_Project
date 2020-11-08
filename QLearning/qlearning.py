@@ -4,7 +4,7 @@ import gym
 from gym_gomoku.envs import util
 from gym_gomoku.envs import gomoku
 
-def train(num_episode, alpha, gamma, epsilon):
+def train(env, num_episode, alpha, gamma, epsilon):
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
     for i in range(num_episode):
         state = env.reset()
@@ -23,8 +23,8 @@ def train(num_episode, alpha, gamma, epsilon):
         q_table[state, action] = new_q_value
         state = next_state
     
-    if (episode+1) % 100 == 0:
-        env.render()
+        if (i+1) % 100 == 0:
+            env.render()
     return q_table
 
 
@@ -34,7 +34,7 @@ def main():
     alpha = 0.1
     gamma = 0.6
     epsilon = 0.1
-    q_table = train(num_episode, alpha, gamma, epsilon)
+    q_table = train(env, num_episode, alpha, gamma, epsilon)
 
     total_epochs = 0
     total_penalties = 0
