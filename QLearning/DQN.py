@@ -11,20 +11,17 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torchvision.transforms as T
 
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
-
 class DQN(nn.Module):
-    def __init__(self, state_size):
+    def __init__(self, state_size, action_size):
         super(DQN, self).__init__()
         self.alpha = 0.2
         self.gamma = 0.9
         self.epsilon = 0.1
-        self.num_action = state_size[0] * state_size[1]
+        self.action_size = action_size
         self.model = nn.Sequential(
             nn.Linear(state_size[0]*state_size[1], state_size[0]*2),
             nn.ReLU(),
-            nn.Linear(state_size[0]*2, self.num_action)
+            nn.Linear(state_size[0]*2, self.action_size)
         )
     
     def forward(self, x):
@@ -35,16 +32,45 @@ class DQN(nn.Module):
 
     def act(self, state):
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.num_action)
-        action_qvals = self.model.predict(state)
+            return random.randrange(self.action_size)
+        action_qvals = self.model(state)
         return np.argmax(action_qvals[0])
     
     def replay(self):
-        minibatch = random.sample(self.memory, 10)
+        minibatch = random.sample(self.memory, 15)
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
                 target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
-            target_f = self.modek.predict(state)
+            target_f = self.model(state)
             target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
+
+
+
+def main():
+    env = gym.make('Gomoku9x9-v0')
+    state_size = env.observation_space.shape
+    action_size = env.action_space.n
+    gomoku_dqn = DQN(state_size, action_size)
+
+    # Evaluation
+    for i in range(1000):
+        state = env.reset()
+        state = state.flatten()
+        for t in range(100):
+            action = gomoku_dqn.act(state)
+            next_state, reward, done, _ = env.step(action)
+            next_state = next_state.flatten()
+            gomoku_dqn.memorize(state, action, reward, next_state, done)
+            state = next_state
+
+            if done:
+                print("episode: {}/1000, score: {}, e: {:.2}"
+                      .format(i, time, agent.epsilon))
+                break
+            if len(gomoku_dqn.memory) > 40:
+                gomoku_dqn.replay()
+
+if __name__ == '__main__':
+    main()
