@@ -18,6 +18,7 @@ class DQN(nn.Module):
         self.gamma = 0.9
         self.epsilon = 0.1
         self.action_size = action_size
+        self.memory = list()
         self.model = nn.Sequential(
             nn.Linear(state_size[0]*state_size[1], state_size[0]*2),
             nn.ReLU(),
@@ -33,15 +34,15 @@ class DQN(nn.Module):
     def act(self, state):
         if np.random.rand() <= self.epsilon:
             return random.randrange(self.action_size)
-        action_qvals = self.model(state)
-        return np.argmax(action_qvals[0])
+        action_qvals = self.model(torch.from_numpy(state).float())
+        return torch.argmax(action_qvals[0])
     
     def replay(self):
         minibatch = random.sample(self.memory, 15)
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
-                target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
+                target = reward + self.gamma * torch.amax(self.model(torch.from_numpy(next_state)).float()[0])
             target_f = self.model(state)
             target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1, verbose=0)
@@ -53,7 +54,6 @@ def main():
     state_size = env.observation_space.shape
     action_size = env.action_space.n
     gomoku_dqn = DQN(state_size, action_size)
-
     # Evaluation
     for i in range(1000):
         state = env.reset()
