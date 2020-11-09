@@ -14,47 +14,37 @@ import torchvision.transforms as T
 Transition = namedtuple('Transition',
                         ('state', 'action', 'next_state', 'reward'))
 
-
-class ReplayMemory(object):
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
-
-    def push(self, *args):
-        """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
 class DQN(nn.Module):
-    def __init__(self, h, w, outputs):
+    def __init__(self, state_size):
         super(DQN, self).__init__()
-        self.conv1 = nn.Conv2d(9, 9, kernel_size=3, stride=2)
-        self.bn1 = nn.BatchNorm2d(9)
-        self.conv2 = nn.Conv2d(9, 9, kernel_size=3, stride=2)
-        self.bn2 = nn.BatchNorm2d(9)
-        self.conv3 = nn.Conv2d(9, 9, kernel_size=3, stride=2)
-        self.bn3 = nn.BatchNorm2d(9)
-
-        def conv2d_size_out(size, kernel_size = 3, stride = 2):
-            return (size - (kernel_size - 1) - 1) // stride  + 1
-        convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(w)))
-        convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(h)))
-        linear_input_size = convw * convh * 2
-        self.head = nn.Linear(linear_input_size, outputs)
-
-        # Called with either one element to determine next action, or a batch
-        # during optimization. Returns tensor([[left0exp,right0exp]...]).
+        self.alpha = 0.2
+        self.gamma = 0.9
+        self.epsilon = 0.1
+        self.num_action = state_size[0] * state_size[1]
+        self.model = nn.Sequential(
+            nn.Linear(state_size[0]*state_size[1], state_size[0]*2),
+            nn.ReLU(),
+            nn.Linear(state_size[0]*2, self.num_action)
+        )
+    
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        return self.head(x.view(x.size(0), -1))
+        return self.model(x)
+        
+    def memorize(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+
+    def act(self, state):
+        if np.random.rand() <= self.epsilon:
+            return random.randrange(self.num_action)
+        action_qvals = self.model.predict(state)
+        return np.argmax(action_qvals[0])
+    
+    def replay(self):
+        minibatch = random.sample(self.memory, 10)
+        for state, action, reward, next_state, done in minibatch:
+            target = reward
+            if not done:
+                target = reward + self.gamma * np.amax(self.model.predict(next_state)[0])
+            target_f = self.modek.predict(state)
+            target_f[0][action] = target
+            self.model.fit(state, target_f, epochs=1, verbose=0)
